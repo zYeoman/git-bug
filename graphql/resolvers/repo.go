@@ -6,8 +6,12 @@ import (
 	"github.com/MichaelMure/git-bug/bug"
 	"github.com/MichaelMure/git-bug/cache"
 	"github.com/MichaelMure/git-bug/graphql/connections"
+	"github.com/MichaelMure/git-bug/graphql/graph"
 	"github.com/MichaelMure/git-bug/graphql/models"
+	"github.com/MichaelMure/git-bug/identity"
 )
+
+var _ graph.RepositoryResolver = &repoResolver{}
 
 type repoResolver struct{}
 
@@ -81,4 +85,20 @@ func (repoResolver) Bug(ctx context.Context, obj *models.Repository, prefix stri
 	}
 
 	return b.Snapshot(), nil
+}
+
+func (repoResolver) AllIdentities(ctx context.Context, obj *models.Repository, after *string, before *string, first *int, last *int) (models.IdentityConnection, error) {
+	panic("implement me")
+}
+
+func (repoResolver) Identity(ctx context.Context, obj *models.Repository, prefix string) (*identity.Interface, error) {
+	i, err := obj.Repo.ResolveIdentityPrefix(prefix)
+
+	if err != nil {
+		return nil, err
+	}
+
+	ii := i.Identity.(identity.Interface)
+
+	return , nil
 }
