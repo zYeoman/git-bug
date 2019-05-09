@@ -149,6 +149,14 @@
   version = "v1.0"
 
 [[projects]]
+  digest = "1:ba852707958e39694e7f64328008287892adf9b1aed0174480e2f50e0c23e521"
+  name = "github.com/logrusorgru/aurora"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "21d75270181e0436fee7bd58b991c212cf309068"
+  version = "v2.0"
+
+[[projects]]
   digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -258,6 +266,14 @@
   ]
   pruneopts = "UT"
   revision = "809beceb23714880abc4a382a00c05f89d13b1cc"
+
+[[projects]]
+  digest = "1:9421f6e9e28ef86933e824b5caff441366f2b69bb281085b9dca40e1f27a1602"
+  name = "github.com/shurcooL/sanitized_anchor_name"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7bfe4c7ecddb3666a94b053b422cdd8f5aaa3615"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -433,6 +449,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:2ee0f15eb0fb04f918db7c2dcf39745f40d69f798ef171610a730e8a56aaa4fd"
+  name = "gopkg.in/russross/blackfriday.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d3b5b032dc8e8927d31a5071b56e14c89f045135"
+  version = "v2.0.1"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -454,6 +478,7 @@
     "github.com/fatih/color",
     "github.com/gorilla/mux",
     "github.com/icrowley/fake",
+    "github.com/logrusorgru/aurora",
     "github.com/mattn/go-runewidth",
     "github.com/phayes/freeport",
     "github.com/pkg/errors",
@@ -473,6 +498,7 @@
     "golang.org/x/oauth2",
     "golang.org/x/text/runes",
     "golang.org/x/text/transform",
+    "gopkg.in/russross/blackfriday.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
