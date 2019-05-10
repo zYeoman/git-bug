@@ -46,13 +46,23 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 	case blackfriday.List:
 
 	case blackfriday.Item:
+		if entering {
+			_, _ = fmt.Fprint(w, pad, "  • ")
+		}
 
 	case blackfriday.Paragraph:
 		if entering {
 			r.paragraph.Reset()
 		} else {
 			out, _ := text.WrapLeftPadded(r.paragraph.String(), r.lineWidth, r.leftPad)
-			_, _ = fmt.Fprint(w, out, "\n\n")
+			_, _ = fmt.Fprint(w, out, "\n")
+
+			if node.Next != nil {
+				switch node.Next.Type {
+				case blackfriday.Paragraph, blackfriday.Heading, blackfriday.HorizontalRule:
+					_, _ = fmt.Fprintln(w)
+				}
+			}
 		}
 
 	case blackfriday.Heading:
@@ -78,7 +88,7 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 		return blackfriday.SkipChildren
 
 	case blackfriday.HorizontalRule:
-		_, _ = fmt.Fprintf(w, "%s%s\n", pad, strings.Repeat("─", r.lineWidth-r.leftPad))
+		_, _ = fmt.Fprintf(w, "%s%s\n\n", pad, strings.Repeat("─", r.lineWidth-r.leftPad))
 
 	case blackfriday.Emph:
 		r.paragraph.WriteString(aurora.Italic(string(node.FirstChild.Literal)).String())
