@@ -5,10 +5,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/logrusorgru/aurora"
 	"github.com/mattn/go-runewidth"
 	"gopkg.in/russross/blackfriday.v2"
 
+	"github.com/MichaelMure/git-bug/util/colors"
 	"github.com/MichaelMure/git-bug/util/text"
 )
 
@@ -75,7 +75,7 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 
 		// output the text, truncated if needed, no line break
 		truncated := runewidth.Truncate(rendered, r.lineWidth, "…")
-		colored := aurora.Colorize(truncated, shade(node.Level)).String()
+		colored := shade(node.Level)(truncated)
 		_, _ = fmt.Fprintln(w, colored)
 
 		// render the underline, if any
@@ -91,15 +91,15 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 		_, _ = fmt.Fprintf(w, "%s%s\n\n", pad, strings.Repeat("─", r.lineWidth-r.leftPad))
 
 	case blackfriday.Emph:
-		r.paragraph.WriteString(aurora.Italic(string(node.FirstChild.Literal)).String())
+		r.paragraph.WriteString(colors.Italic(string(node.FirstChild.Literal)))
 		return blackfriday.SkipChildren
 
 	case blackfriday.Strong:
-		r.paragraph.WriteString(aurora.Bold(string(node.FirstChild.Literal)).String())
+		r.paragraph.WriteString(colors.Bold(string(node.FirstChild.Literal)))
 		return blackfriday.SkipChildren
 
 	case blackfriday.Del:
-		r.paragraph.WriteString(aurora.CrossedOut(string(node.FirstChild.Literal)).String())
+		r.paragraph.WriteString(colors.CrossedOut(string(node.FirstChild.Literal)))
 		return blackfriday.SkipChildren
 
 	case blackfriday.Link:
