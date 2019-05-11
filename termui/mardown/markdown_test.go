@@ -29,15 +29,17 @@ func TestRender(t *testing.T) {
 		_, file := filepath.Split(fullpath)
 		name := strings.TrimRight(file, ".md")
 
-		source, err := ioutil.ReadFile(path.Join(sourcepath, name+".md"))
-		require.NoError(t, err)
+		t.Run(name, func(t *testing.T) {
+			source, err := ioutil.ReadFile(path.Join(sourcepath, name+".md"))
+			require.NoError(t, err)
 
-		expected, err := ioutil.ReadFile(path.Join(resultpath, name+".txt"))
-		require.NoError(t, err)
+			expected, err := ioutil.ReadFile(path.Join(resultpath, name+".txt"))
+			require.NoError(t, err)
 
-		output := Render(string(source), 40, 4)
+			output := Render(string(source), 40, 4)
 
-		assert.Equal(t, string(expected), string(output))
+			assert.Equal(t, string(expected), string(output))
+		})
 
 		return nil
 	})
