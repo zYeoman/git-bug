@@ -50,10 +50,16 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 	case blackfriday.BlockQuote:
 
 	case blackfriday.List:
+		if !entering && node.Next != nil {
+			if node.Next.Type != blackfriday.List && node.Parent.Type != blackfriday.Item {
+				_, _ = fmt.Fprintln(w)
+			}
+		}
 
 	case blackfriday.Item:
+		// write the prefix and let Paragraph handle the rest
 		if entering {
-			_, _ = fmt.Fprint(w, pad, "  • ")
+			r.paragraph.WriteString(r.itemPrefix(node))
 		}
 
 	case blackfriday.Paragraph:
@@ -61,9 +67,15 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 			out, _ := text.WrapLeftPadded(r.paragraph.String(), r.lineWidth, r.leftPad)
 			_, _ = fmt.Fprint(w, out, "\n")
 
+			// extra line break in some cases
 			if node.Next != nil {
 				switch node.Next.Type {
-				case blackfriday.Paragraph, blackfriday.Heading, blackfriday.HorizontalRule:
+				case blackfriday.Paragraph, blackfriday.Heading, blackfriday.HorizontalRule,
+					blackfriday.CodeBlock:
+					_, _ = fmt.Fprintln(w)
+				}
+
+				if node.Next.Type == blackfriday.List && node.Parent.Type != blackfriday.Item {
 					_, _ = fmt.Fprintln(w)
 				}
 			}
@@ -117,13 +129,14 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 	case blackfriday.HTMLBlock:
 
 	case blackfriday.CodeBlock:
-		r.RenderCodeBlock(w, node)
+		r.renderCodeBlock(w, node)
 
 	case blackfriday.Softbreak:
 
 	case blackfriday.Hardbreak:
 
 	case blackfriday.Code:
+		fmt.Println(node)
 
 	case blackfriday.HTMLSpan:
 
@@ -148,7 +161,7 @@ func (*renderer) RenderHeader(w io.Writer, ast *blackfriday.Node) {}
 
 func (*renderer) RenderFooter(w io.Writer, ast *blackfriday.Node) {}
 
-func (r *renderer) RenderCodeBlock(w io.Writer, node *blackfriday.Node) {
+func (r *renderer) renderCodeBlock(w io.Writer, node *blackfriday.Node) {
 	code := string(node.Literal)
 	var lexer chroma.Lexer
 	// try to get the lexer from the language tag if any
@@ -176,26 +189,23 @@ func (r *renderer) RenderCodeBlock(w io.Writer, node *blackfriday.Node) {
 	iterator, err := lexer.Tokenise(nil, code)
 	if err != nil {
 		// Something failed, falling back to no highlight render
-		r.RenderFormattedCodeBlock(w, code)
+		r.renderFormattedCodeBlock(w, code)
 		return
 	}
 
 	buf := &bytes.Buffer{}
 
-	// TODO: a custom style for the terminal would probably be better
 	err = formatter.Format(buf, styles.Pygments, iterator)
 	if err != nil {
 		// Something failed, falling back to no highlight render
-		r.RenderFormattedCodeBlock(w, code)
+		r.renderFormattedCodeBlock(w, code)
 		return
 	}
 
-	r.RenderFormattedCodeBlock(w, buf.String())
+	r.renderFormattedCodeBlock(w, buf.String())
 }
 
-func (r *renderer) RenderFormattedCodeBlock(w io.Writer, code string) {
-	fmt.Println(code)
-
+func (r *renderer) renderFormattedCodeBlock(w io.Writer, code string) {
 	// remove the trailing line break
 	code = strings.TrimRight(code, "\n")
 
@@ -205,4 +215,36 @@ func (r *renderer) RenderFormattedCodeBlock(w io.Writer, code string) {
 	_, _ = fmt.Fprint(w, output)
 
 	_, _ = fmt.Fprintf(w, "\n\n")
+}
+
+func (r *renderer) itemPrefix(node *blackfriday.Node) string {
+	level := 0
+	for parent := node.Parent; parent != nil; parent = parent.Parent {
+		if parent.Type == blackfriday.List {
+			level++
+		}
+	}
+
+	padding := strings.Repeat(" ", level*2)
+
+	switch {
+	// numbered list
+	case node.ListData.ListFlags&blackfriday.ListTypeOrdered != 0:
+		itemNumber := 1
+		for prev := node.Prev; prev != nil; prev = prev.Prev {
+			itemNumber++
+		}
+		return fmt.Sprintf("%s%d. ", padding, itemNumber)
+
+	// header of a definition
+	case node.ListData.ListFlags&blackfriday.ListTypeDefinition != 0:
+		return padding + "    "
+
+	// content of a definition
+	case node.ListData.ListFlags&blackfriday.ListTypeTerm != 0:
+		return padding
+	}
+
+	// no flags means it's the normal bullet point list
+	return padding + "• "
 }
