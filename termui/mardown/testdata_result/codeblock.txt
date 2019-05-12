@@ -1,0 +1,22 @@
+    [32;1m｜ [0m[1mpackage main
+    [32;1m｜ [0m
+    [32;1m｜ [0m[1mimport "fmt"
+    [32;1m｜ [0m
+    [32;1m｜ [0m[1mfunc main() {
+    [32;1m｜ [0m    fmt.[94mPrintln[0m([31m"Hello world"[0m)
+    [32;1m｜ [0m}
+
+    [32;1m｜ [0m[90m#include[0m [90m<stdio.h>
+    [32;1m｜ [0m[0mint main()
+    [32;1m｜ [0m{
+    [32;1m｜ [0m   printf([31m"Hello, World!"[0m);
+    [32;1m｜ [0m   [1mreturn 0;
+    [32;1m｜ [0m}
+
+    [32;1m｜ [0m#include <stdio.h>
+    [32;1m｜ [0mint main()
+    [32;1m｜ [0m{
+    [32;1m｜ [0m   printf("Hello, World!");
+    [32;1m｜ [0m   return 0;
+    [32;1m｜ [0m}
+

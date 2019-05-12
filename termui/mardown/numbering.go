@@ -2,11 +2,13 @@ package mardown
 
 import "strconv"
 
-type numbering struct {
+type headingNumbering struct {
 	levels [6]int
 }
 
-func (n *numbering) NextLevel(level int) {
+// Observe register the event of a new level with the given depth and
+// adjust the numbering accordingly
+func (hn *headingNumbering) Observe(level int) {
 	if level <= 0 {
 		panic("level start at 1, ask blackfriday why")
 	}
@@ -14,18 +16,19 @@ func (n *numbering) NextLevel(level int) {
 		panic("Markdown is limited to 6 levels of heading")
 	}
 
-	n.levels[level-1]++
+	hn.levels[level-1]++
 	for i := level; i < 6; i++ {
-		n.levels[i] = 0
+		hn.levels[i] = 0
 	}
 }
 
-func (n *numbering) Render() string {
-	slice := n.levels[:]
+// Render render the current headings numbering.
+func (hn *headingNumbering) Render() string {
+	slice := hn.levels[:]
 
 	// pop the last zero levels
 	for i := 5; i >= 0; i-- {
-		if n.levels[i] != 0 {
+		if hn.levels[i] != 0 {
 			break
 		}
 		slice = slice[:len(slice)-1]

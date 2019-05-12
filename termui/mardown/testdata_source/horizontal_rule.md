@@ -1,8 +1,13 @@
----
-This is a paragraph
+Three or more...
 
 ---
 
-Another paragraph
+Hyphens
 
----
+***
+
+Asterisks
+
+___
+
+Underscores

@@ -1,10 +1,16 @@
 package mardown
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strings"
 
+	"github.com/alecthomas/chroma"
+	"github.com/alecthomas/chroma/formatters"
+	"github.com/alecthomas/chroma/lexers"
+	"github.com/alecthomas/chroma/styles"
+	"github.com/fatih/color"
 	"github.com/mattn/go-runewidth"
 	"gopkg.in/russross/blackfriday.v2"
 
@@ -21,9 +27,9 @@ type renderer struct {
 	leftPad int
 
 	// Count the number of line in the rendered output
-	lines int
+	// lines int
 
-	numbering numbering
+	headingNumbering headingNumbering
 
 	paragraph strings.Builder
 }
@@ -51,9 +57,7 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 		}
 
 	case blackfriday.Paragraph:
-		if entering {
-			r.paragraph.Reset()
-		} else {
+		if !entering {
 			out, _ := text.WrapLeftPadded(r.paragraph.String(), r.lineWidth, r.leftPad)
 			_, _ = fmt.Fprint(w, out, "\n")
 
@@ -63,15 +67,16 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 					_, _ = fmt.Fprintln(w)
 				}
 			}
+			r.paragraph.Reset()
 		}
 
 	case blackfriday.Heading:
 		// the child node of a heading is a blackfriday.Text. We render the whole thing
 		// in one go and skip the child.
 
-		// render the full line with the numbering
-		r.numbering.NextLevel(node.Level)
-		rendered := fmt.Sprintf("%s%s %s", pad, r.numbering.Render(), string(node.FirstChild.Literal))
+		// render the full line with the headingNumbering
+		r.headingNumbering.Observe(node.Level)
+		rendered := fmt.Sprintf("%s%s %s", pad, r.headingNumbering.Render(), string(node.FirstChild.Literal))
 
 		// output the text, truncated if needed, no line break
 		truncated := runewidth.Truncate(rendered, r.lineWidth, "…")
@@ -112,6 +117,7 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 	case blackfriday.HTMLBlock:
 
 	case blackfriday.CodeBlock:
+		r.RenderCodeBlock(w, node)
 
 	case blackfriday.Softbreak:
 
@@ -141,3 +147,62 @@ func (r *renderer) RenderNode(w io.Writer, node *blackfriday.Node, entering bool
 func (*renderer) RenderHeader(w io.Writer, ast *blackfriday.Node) {}
 
 func (*renderer) RenderFooter(w io.Writer, ast *blackfriday.Node) {}
+
+func (r *renderer) RenderCodeBlock(w io.Writer, node *blackfriday.Node) {
+	code := string(node.Literal)
+	var lexer chroma.Lexer
+	// try to get the lexer from the language tag if any
+	if len(node.CodeBlockData.Info) > 0 {
+		lexer = lexers.Get(string(node.CodeBlockData.Info))
+	}
+	// fallback on detection
+	if lexer == nil {
+		lexer = lexers.Analyse(code)
+	}
+	// all failed :-(
+	if lexer == nil {
+		lexer = lexers.Fallback
+	}
+	// simplify the lexer output
+	lexer = chroma.Coalesce(lexer)
+
+	var formatter chroma.Formatter
+	if color.NoColor {
+		formatter = formatters.Fallback
+	} else {
+		formatter = formatters.TTY8
+	}
+
+	iterator, err := lexer.Tokenise(nil, code)
+	if err != nil {
+		// Something failed, falling back to no highlight render
+		r.RenderFormattedCodeBlock(w, code)
+		return
+	}
+
+	buf := &bytes.Buffer{}
+
+	// TODO: a custom style for the terminal would probably be better
+	err = formatter.Format(buf, styles.Pygments, iterator)
+	if err != nil {
+		// Something failed, falling back to no highlight render
+		r.RenderFormattedCodeBlock(w, code)
+		return
+	}
+
+	r.RenderFormattedCodeBlock(w, buf.String())
+}
+
+func (r *renderer) RenderFormattedCodeBlock(w io.Writer, code string) {
+	fmt.Println(code)
+
+	// remove the trailing line break
+	code = strings.TrimRight(code, "\n")
+
+	pad := strings.Repeat(" ", r.leftPad) + colors.GreenBold("｜ ")
+
+	output, _ := text.WrapWithPad(code, r.lineWidth, pad)
+	_, _ = fmt.Fprint(w, output)
+
+	_, _ = fmt.Fprintf(w, "\n\n")
+}
