@@ -1,3 +1,5 @@
+Here is a piece of code:
+
 ```go
 package main
 
@@ -8,6 +10,8 @@ func main() {
 }
 ```
 
+Another one, tagged as well with the language name
+
 ```c
 #include <stdio.h>
 int main()
@@ -16,6 +20,8 @@ int main()
    return 0;
 }
 ```
+
+This one is not:
 
 ```
 #include <stdio.h>
